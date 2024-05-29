@@ -124,6 +124,54 @@ map.pm.setPathOptions({
   weight: 2
 });
 
+//-----------------
+// Selectable Feature Layers
+
+L.esri.Support.cors = false;
+
+var featureLayers = [
+  {
+    active: false,
+    icon: '<i class="bi bi-droplet-fill"></i>',
+    name: "Water NSW Schedule 1 Areas (No Entry)",
+    layer: (function() {
+      const catchment = L.esri
+      .featureLayer({
+        url: "https://mapprod.waternsw.com.au/arcgis/rest/services/Public/Greater_Sydney_Declared_Catchment_and_Water_Supply_System/FeatureServer/1",
+        simplifyFactor: 0.5,
+        precision: 4,
+        where: "Schedule = 1",
+        onEachFeature: onEachFeature
+      })
+      return catchment;
+    }())
+  },
+  {
+    active: false,
+    icon: '<i class="bi bi-tree-fill"></i>',
+    name: "NPWS",
+    layer: (function() {
+      const npws = L.esri
+      .featureLayer({
+        url: "https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/Tenure/NPWS_AllManagedLand/MapServer/0",
+        simplifyFactor: 0.5,
+        precision: 4,
+        onEachFeature: onEachFeature
+      })
+      return npws;
+    }())
+  }
+];
+
+var panelLayers = new L.Control.PanelLayers([], featureLayers, {
+	collapsibleGroups: false,
+	collapsed: true,
+  compact: true,
+  position: 'bottomleft'
+});
+map.addControl(panelLayers);
+
+
 var getShapeType = function(layer) {
   if (layer instanceof L.Circle) { return 'circle'; }
   if (layer instanceof L.Marker) { return 'marker'; }
@@ -438,16 +486,24 @@ function onEachFeature(feature, layer) {
   var measure = '';
   if (feature.geometry.type === 'Polygon') {
     measure = measureArea(layer.getLatLngs()).totalArea;
-    //measure = (L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]) / 1000000).toFixed(2) + ' km<sup>2</sup>';
   }
   if (feature.geometry.type === 'LineString') {
     measure = measureLine(layer.getLatLngs()).totalLength;
-    //measure = L.GeometryUtil.getDistance(layer.getLatLngs()).toFixed(2) + ' km';
   }  
   var input = L.DomUtil.create('input', 'my-input');
-  if (feature.properties && feature.properties.name) {
-    input.value = feature.properties.name;
-  } else {feature.properties.name = ''}
+
+  // Name the feature based on specified name. Annoyingly, some gov sources
+  // use a property in uppercase, so we have to handle this.
+  // Fallback to an empty string if neither are set.
+  if (feature.properties) {
+    if (feature.properties.name === undefined && feature.properties.NAME) {
+      feature.properties.name = feature.properties.NAME
+    }
+  } else {
+    feature.properties.name = ''
+  }
+  input.value = feature.properties.name;
+
   L.DomEvent.addListener(input, 'change', function () {
     feature.properties.name = input.value;
     layer.bindTooltip(feature.properties.name,{"sticky":true});
