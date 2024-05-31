@@ -149,13 +149,13 @@ var featureLayers = [
   {
     active: false,
     icon: '<i class="bi bi-tree-fill"></i>',
-    name: "NPWS",
+    name: "NPWS NSW National Parks",
     layer: (function() {
       const npws = L.esri
       .featureLayer({
         url: "https://mapprod3.environment.nsw.gov.au/arcgis/rest/services/Tenure/NPWS_AllManagedLand/MapServer/0",
-        simplifyFactor: 0.5,
-        precision: 4,
+        fetchAllFeatures: true,
+        where: "NAME LIKE '%National Park%'",
         onEachFeature: onEachFeature
       })
       return npws;
@@ -164,10 +164,12 @@ var featureLayers = [
 ];
 
 var panelLayers = new L.Control.PanelLayers([], featureLayers, {
+  title: 'Feature Layers',
 	collapsibleGroups: false,
 	collapsed: true,
   compact: true,
-  position: 'bottomleft'
+  position: 'bottomleft',
+  className: 'featureLayerPanel'
 });
 map.addControl(panelLayers);
 

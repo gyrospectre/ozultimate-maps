@@ -15,3 +15,10 @@ html, body {
 .leaflet-container {
   cursor: crosshair !important;
 }
+.featureLayerPanel {
+  opacity: .9;
+}
+.bi {
+  color: #36454F;
+  font-size: 1rem;
+}
